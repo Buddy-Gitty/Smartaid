@@ -3,9 +3,9 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-import os
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
+import os
 
 # Create the app and configure it
 app = Flask(__name__)
@@ -50,10 +50,11 @@ def load_user(user_id):
 
 # OpenAI client setup
 load_dotenv()
-client = OpenAI(
-  api_key=os.getenv("OPENAI_API_KEY")
+client = OpenAI( 
+    api_key= os.getenv("OPENAI_API_KEY")
 )
 MODEL_NAME = "gpt-4o-mini"
+
 
 # === Routes ===
 @app.route("/")
@@ -174,7 +175,6 @@ def logout():
     return redirect(url_for('home'))
 
 @app.route("/chat", methods=['POST'])
-@login_required # Ensure only logged-in users can chat
 def chat():
     user_message = request.json.get("message", "")
 
@@ -182,23 +182,27 @@ def chat():
         return jsonify({"reply": "Please enter some symptoms or questions."})
 
     chat_prompt = f"""
-    You are a medical-symptom analyzer. Read the user's message and decide whether it contains health symptoms
-    (relevant words about pain, fever, cough, rash, dizziness, etc.). Then respond with ONLY plain text — do NOT output JSON, code fences, markdown, or any wrapper.
+    You are SmartAid, a medical-symptom analyzer chatbot. You analyze the user's messages in context — not just the latest message — 
+    to detect possible health symptoms, conditions, or related personal details (like age, weight, gender, or lifestyle).
 
-    If you detect symptom(s), output EXACTLY the following plain-text format (use newlines as shown):
+    If symptoms are mentioned, respond in this exact format (using newlines as shown):
 
-    🔍 **<Short bolded title summarizing condition>**
+    🔍 <Short title summarizing condition>
     🧠 Description: <Brief explanation (1–3 lines)>
-    📊 disease_possibility: <Likelihood assessment (1 line)>
-    🥗 healthy_food_suggestions: <Food recommendations (2–4 items, comma-separated)>
-    ⚠️ severity: <Low, Medium, or High>
+    📊 Disease Possibility: <Likelihood assessment (1 line)>
+    🥗 Healthy Food Suggestions: <Food recommendations (2–4 items, comma-separated)>
+    ⚠️ Severity: <Low, Medium, or High>
+    Disclaimer: If symptoms are severe or worsen, seek medical attention.
 
-    If you do NOT detect symptoms, respond in a friendly, interactive, conversational style (one or two sentences).
+    If the user provides information like age, weight, or health habits (not a symptom), use that information to give a relevant health insight or advice
+    related to previous symptoms or general well-being. Be brief and practical.
+
+    If the user is just greeting or chatting casually, respond in a warm, friendly tone (1–2 sentences).
 
     Important:
-    - Output only the text above — no JSON, no additional keys, no commentary, no "response:" wrapper.
-    - Include a brief, clear medical-safety disclaimer at the end of symptom outputs: "If symptoms are severe or worsen, seek medical attention."
-    - Keep all lines short and plain text.
+    - Respond only in plain text — no markdown, no JSON, no code blocks.
+    - Keep the tone clear, short, and human-like.
+    - Always include a one-line disclaimer at the end of symptom responses.
 
     The user says: "{user_message}"
     """
@@ -224,5 +228,4 @@ if __name__ == "__main__":
     # Create database tables if they don't exist
     with app.app_context():
         db.create_all()
-
     app.run(debug=True)
