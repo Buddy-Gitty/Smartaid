@@ -190,6 +190,7 @@ def chat():
     🔍 <Short title summarizing condition>
     🧠 Description: <Brief explanation (1–3 lines)>
     📊 Disease Possibility: <Likelihood assessment (1 line)>
+    💪 health Guidance: <health improvements (2 lines)>
     🥗 Healthy Food Suggestions: <Food recommendations (2–4 items, comma-separated)>
     ⚠️ Severity: <Low, Medium, or High>
     Disclaimer: If symptoms are severe or worsen, seek medical attention.
@@ -225,6 +226,8 @@ def chat():
     return jsonify({"reply": reply_text})
 
 if __name__ == "__main__":
+    from os import environ
+    app.run(host='0.0.0.0', port=int(environ.get('PORT', 5000)))
     # Create database tables if they don't exist
     with app.app_context():
         db.create_all()
